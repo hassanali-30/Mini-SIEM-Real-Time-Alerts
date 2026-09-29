@@ -232,8 +232,9 @@ class Correlator:
                 ))
 
         if event.event_type in {"malware_detected", "malware_alert", "keylogger_indicator"} and event.host:
+            chain_recent = self._window(event.timestamp, self.rules["malware_chain_window"])
             chain = [
-                item for item in recent
+                item for item in chain_recent
                 if item.host == event.host and item.event_type in {"network_connection", "dns_query", "outbound_connection"}
             ]
             if chain:
