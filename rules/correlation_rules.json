@@ -1,0 +1,8 @@
+{
+  "brute_force_threshold": 5,
+  "brute_force_window": 300,
+  "port_scan_threshold": 10,
+  "port_scan_window": 120,
+  "post_failure_window": 300,
+  "malware_chain_window": 600
+}
