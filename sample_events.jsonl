@@ -1,0 +1,8 @@
+{"timestamp":"2026-01-01T00:00:00Z","source":"auth","event_type":"login_failed","username":"admin","src_ip":"10.0.0.50","host":"server-01","status":"failure","message":"invalid password"}
+{"timestamp":"2026-01-01T00:00:20Z","source":"auth","event_type":"login_failed","username":"admin","src_ip":"10.0.0.50","host":"server-01","status":"failure","message":"invalid password"}
+{"timestamp":"2026-01-01T00:00:40Z","source":"auth","event_type":"login_failed","username":"admin","src_ip":"10.0.0.50","host":"server-01","status":"failure","message":"invalid password"}
+{"timestamp":"2026-01-01T00:01:00Z","source":"auth","event_type":"login_failed","username":"admin","src_ip":"10.0.0.50","host":"server-01","status":"failure","message":"invalid password"}
+{"timestamp":"2026-01-01T00:01:20Z","source":"auth","event_type":"login_failed","username":"admin","src_ip":"10.0.0.50","host":"server-01","status":"failure","message":"invalid password"}
+{"timestamp":"2026-01-01T00:01:40Z","source":"auth","event_type":"login_success","username":"admin","src_ip":"10.0.0.50","host":"server-01","status":"success","message":"authenticated"}
+{"timestamp":"2026-01-01T00:02:00Z","source":"edr","event_type":"malware_detected","host":"server-02","severity":"high","message":"suspicious executable"}
+{"timestamp":"2026-01-01T00:02:30Z","source":"firewall","event_type":"network_connection","host":"server-02","dst_ip":"203.0.113.10","dst_port":443,"status":"allowed"}
