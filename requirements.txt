@@ -1,0 +1,2 @@
+# Core Mini-SIEM uses Python standard library.
+pytest>=8,<9
