@@ -29,9 +29,9 @@ def test_brute_force_alert():
 def test_port_scan_alert():
     correlator = Correlator({"port_scan_threshold": 3, "port_scan_window": 60})
     alerts = []
-    for port in (80, 443, 8080):
+    for second, port in enumerate((80, 443, 8080), start=1):
         alerts.extend(correlator.process(event(
-            port, "network_connection", src_ip="10.0.0.5", dst_ip="10.0.0.9", dst_port=port
+            second, "network_connection", src_ip="10.0.0.5", dst_ip="10.0.0.9", dst_port=port
         )))
     assert any(alert["rule_id"] == "NET-PORT-SCAN" for alert in alerts)
 
