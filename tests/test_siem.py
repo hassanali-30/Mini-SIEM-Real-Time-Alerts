@@ -1,4 +1,4 @@
-from mini_siem import Correlator, Event, normalize_event
+from mini_siem import AlertStore, Correlator, Event, normalize_event
 
 
 def event(second, event_type, **kwargs):
@@ -45,3 +45,29 @@ def test_malware_network_correlation():
     # The current rule is triggered when the malware event is processed; the
     # test ensures no offensive response is generated for network activity.
     assert all("block" not in str(alert).lower() for alert in alerts)
+
+def test_alert_store_filters_by_severity(tmp_path):
+    store = AlertStore(str(tmp_path / "siem.db"))
+    try:
+        store.save_alert({
+            "fingerprint": "high-alert",
+            "rule_id": "TEST-HIGH",
+            "severity": "high",
+            "title": "High alert",
+            "evidence": {"source": "test"},
+        })
+        store.save_alert({
+            "fingerprint": "low-alert",
+            "rule_id": "TEST-LOW",
+            "severity": "low",
+            "title": "Low alert",
+            "evidence": {"source": "test"},
+        })
+
+        alerts = store.recent_alerts(severity="HIGH", limit=1)
+
+        assert len(alerts) == 1
+        assert alerts[0]["rule_id"] == "TEST-HIGH"
+    finally:
+        store.close()
+
