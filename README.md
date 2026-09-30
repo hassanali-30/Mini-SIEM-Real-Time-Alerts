@@ -85,6 +85,9 @@ Available endpoints:
 
 - `GET /health`
 - `GET /alerts`
+- `GET /alerts?severity=high&limit=20`
+
+The `/alerts` endpoint accepts an optional `severity` filter (`low`, `medium`, `high`, or `critical`) and a bounded `limit` from 1 to 500. This supports quick triage without downloading the full alert history.
 
 The API binds to `127.0.0.1`; it is not an internet-facing dashboard.
 
