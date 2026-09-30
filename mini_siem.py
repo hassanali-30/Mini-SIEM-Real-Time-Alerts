@@ -21,6 +21,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 from threading import Thread
 from typing import Any, Iterable
+from urllib.parse import parse_qs, urlparse
 
 
 @dataclass(frozen=True)
@@ -155,10 +156,18 @@ class AlertStore:
         self.connection.commit()
         return True
 
-    def recent_alerts(self, limit: int = 100) -> list[dict[str, Any]]:
-        rows = self.connection.execute(
-            "SELECT * FROM alerts ORDER BY created_at DESC LIMIT ?", (limit,)
-        ).fetchall()
+    def recent_alerts(
+        self, limit: int = 100, severity: str | None = None
+    ) -> list[dict[str, Any]]:
+        """Return recent alerts, optionally filtered by severity."""
+        query = "SELECT * FROM alerts"
+        params: list[Any] = []
+        if severity:
+            query += " WHERE lower(severity)=lower(?)"
+            params.append(severity)
+        query += " ORDER BY created_at DESC LIMIT ?"
+        params.append(limit)
+        rows = self.connection.execute(query, tuple(params)).fetchall()
         return [dict(row) for row in rows]
 
     def close(self) -> None:
@@ -300,10 +309,23 @@ class DashboardHandler(http.server.BaseHTTPRequestHandler):
     store: AlertStore | None = None
 
     def do_GET(self) -> None:
-        if self.path == "/health":
+        parsed = urlparse(self.path)
+        if parsed.path == "/health":
             body = json.dumps({"status": "ok", "service": "mini-siem"}).encode()
-        elif self.path == "/alerts":
-            body = json.dumps(self.store.recent_alerts() if self.store else []).encode()
+        elif parsed.path == "/alerts":
+            query = parse_qs(parsed.query)
+            raw_limit = query.get("limit", ["100"])[0]
+            severity = query.get("severity", [None])[0]
+            try:
+                limit = max(1, min(int(raw_limit), 500))
+            except ValueError:
+                self.send_error(400, "limit must be an integer between 1 and 500")
+                return
+            if severity and severity.lower() not in {"low", "medium", "high", "critical"}:
+                self.send_error(400, "severity must be low, medium, high, or critical")
+                return
+            alerts = self.store.recent_alerts(limit=limit, severity=severity) if self.store else []
+            body = json.dumps(alerts).encode()
         else:
             body = b'{"service":"mini-siem","endpoints":["/health","/alerts"]}'
         self.send_response(200)
