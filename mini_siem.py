@@ -240,16 +240,22 @@ class Correlator:
                     {"username": event.username, "src_ip": event.src_ip, "failed_count": len(failures)},
                 ))
 
-        if event.event_type in {"malware_detected", "malware_alert", "keylogger_indicator"} and event.host:
+        malware_types = {"malware_detected", "malware_alert", "keylogger_indicator"}
+        network_types = {"network_connection", "dns_query", "outbound_connection"}
+        if event.host and event.event_type in malware_types | network_types:
             chain_recent = self._window(event.timestamp, self.rules["malware_chain_window"])
-            chain = [
+            malware_events = [
                 item for item in chain_recent
-                if item.host == event.host and item.event_type in {"network_connection", "dns_query", "outbound_connection"}
+                if item.host == event.host and item.event_type in malware_types
             ]
-            if chain:
+            network_events = [
+                item for item in chain_recent
+                if item.host == event.host and item.event_type in network_types
+            ]
+            if malware_events and network_events:
                 alerts.append(self._alert(
                     "MALWARE-NETWORK-CHAIN", "critical", "Malware indicator followed by network activity",
-                    {"host": event.host, "network_events": len(chain)},
+                    {"host": event.host, "malware_events": len(malware_events), "network_events": len(network_events)},
                 ))
         return alerts
 
