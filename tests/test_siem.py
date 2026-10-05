@@ -42,8 +42,7 @@ def test_malware_network_correlation():
     alerts = correlator.process(event(
         20, "network_connection", host="workstation-01", dst_ip="203.0.113.5"
     ))
-    # The current rule is triggered when the malware event is processed; the
-    # test ensures no offensive response is generated for network activity.
+    assert any(alert["rule_id"] == "MALWARE-NETWORK-CHAIN" for alert in alerts)
     assert all("block" not in str(alert).lower() for alert in alerts)
 
 def test_alert_store_filters_by_severity(tmp_path):
