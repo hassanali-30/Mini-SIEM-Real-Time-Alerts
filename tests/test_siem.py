@@ -70,3 +70,11 @@ def test_alert_store_filters_by_severity(tmp_path):
     finally:
         store.close()
 
+
+
+def test_future_dated_events_do_not_trigger_current_window():
+    correlator = Correlator({"brute_force_threshold": 3, "brute_force_window": 60})
+    correlator.process(event(100, "login_failed", src_ip="10.0.0.5"))
+    correlator.process(event(101, "login_failed", src_ip="10.0.0.5"))
+    alerts = correlator.process(event(50, "login_failed", src_ip="10.0.0.5"))
+    assert not any(alert["rule_id"] == "AUTH-BRUTE-FORCE" for alert in alerts)

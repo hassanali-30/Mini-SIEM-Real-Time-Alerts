@@ -189,7 +189,10 @@ class Correlator:
         self.events: deque[Event] = deque(maxlen=5000)
 
     def _window(self, now: float, seconds: int) -> list[Event]:
-        return [event for event in self.events if now - event.timestamp <= seconds]
+        return [
+            event for event in self.events
+            if 0 <= now - event.timestamp <= seconds
+        ]
 
     @staticmethod
     def _alert(rule_id: str, severity: str, title: str, evidence: dict[str, Any]) -> dict[str, Any]:
