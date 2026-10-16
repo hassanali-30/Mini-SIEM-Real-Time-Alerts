@@ -222,18 +222,31 @@ class Correlator:
                     {"src_ip": event.src_ip, "count": len(failures), "window_seconds": self.rules["brute_force_window"]},
                 ))
 
-        if event.src_ip and event.dst_port is not None:
+        if event.src_ip and event.dst_ip and event.dst_port is not None:
             scan_window = self._window(event.timestamp, self.rules["port_scan_window"])
-            ports = {item.dst_port for item in scan_window if item.src_ip == event.src_ip and item.dst_port is not None}
+            ports = {
+                item.dst_port for item in scan_window
+                if item.src_ip == event.src_ip
+                and item.dst_ip == event.dst_ip
+                and item.dst_port is not None
+            }
             if len(ports) >= self.rules["port_scan_threshold"]:
                 alerts.append(self._alert(
                     "NET-PORT-SCAN", "medium", "Possible port scan",
-                    {"src_ip": event.src_ip, "distinct_ports": sorted(ports), "window_seconds": self.rules["port_scan_window"]},
+                    {
+                        "src_ip": event.src_ip,
+                        "dst_ip": event.dst_ip,
+                        "distinct_ports": sorted(ports),
+                        "window_seconds": self.rules["port_scan_window"],
+                    },
                 ))
 
         if event.status and event.status.lower() in {"success", "succeeded", "allowed"} and event.username:
+            failure_window = self._window(
+                event.timestamp, self.rules["post_failure_window"]
+            )
             failures = [
-                item for item in recent
+                item for item in failure_window
                 if item.username == event.username
                 and item.event_type in {"login_failed", "authentication_failure", "failed_login"}
             ]

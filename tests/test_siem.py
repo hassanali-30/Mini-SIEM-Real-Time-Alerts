@@ -36,6 +36,44 @@ def test_port_scan_alert():
     assert any(alert["rule_id"] == "NET-PORT-SCAN" for alert in alerts)
 
 
+def test_port_scan_ports_are_scoped_to_destination():
+    correlator = Correlator({"port_scan_threshold": 3, "port_scan_window": 60})
+    alerts = []
+    for second, (destination, port) in enumerate((
+        ("10.0.0.9", 80),
+        ("10.0.0.10", 443),
+        ("10.0.0.11", 8080),
+    ), start=1):
+        alerts.extend(correlator.process(event(
+            second, "network_connection", src_ip="10.0.0.5",
+            dst_ip=destination, dst_port=port,
+        )))
+    assert not any(alert["rule_id"] == "NET-PORT-SCAN" for alert in alerts)
+
+
+def test_success_after_failures_uses_configured_window():
+    correlator = Correlator({"brute_force_window": 300, "post_failure_window": 10})
+    correlator.process(event(
+        1, "login_failed", username="admin", src_ip="10.0.0.5"
+    ))
+    expired = correlator.process(event(
+        20, "login_success", username="admin", src_ip="10.0.0.5", status="success"
+    ))
+    assert not any(
+        alert["rule_id"] == "AUTH-SUCCESS-AFTER-FAILURES" for alert in expired
+    )
+
+    correlator.process(event(
+        21, "login_failed", username="admin", src_ip="10.0.0.5"
+    ))
+    current = correlator.process(event(
+        25, "login_success", username="admin", src_ip="10.0.0.5", status="success"
+    ))
+    assert any(
+        alert["rule_id"] == "AUTH-SUCCESS-AFTER-FAILURES" for alert in current
+    )
+
+
 def test_malware_network_correlation():
     correlator = Correlator({"malware_chain_window": 600})
     correlator.process(event(1, "malware_detected", host="workstation-01"))
